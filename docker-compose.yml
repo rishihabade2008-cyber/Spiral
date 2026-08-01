@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MEM0_API_KEY=${MEM0_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEBUG=True
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app/backend
+      - /tmp/jarvis-workspace:/tmp/jarvis-workspace
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - jarvis-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    command: npm run dev
+    depends_on:
+      - backend
+    networks:
+      - jarvis-network
+
+networks:
+  jarvis-network:
+    driver: bridge
+
+volumes:
+  workspace:
+    driver: local
